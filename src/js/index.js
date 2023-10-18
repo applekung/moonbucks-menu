@@ -1,7 +1,7 @@
 // NEW STEP1
 // 에스프레소 메뉴 추가
 //    메뉴이름 입력 -> (빈값 체크 || FIXME 중복체크) -> 확인버튼
-//    메뉴이름 입력 -> (빈값 체크 || 중복체크) -> 엔터
+//    메뉴이름 입력 -..> (빈값 체크 || 중복체크) -> 엔터
 // 메뉴 추가시 html
 // `<ul id="espresso-menu-list" class="mt-3 pl-0"></ul>`안에 li로
 // insertAdjacentHTML('beforeend', newMenu)
