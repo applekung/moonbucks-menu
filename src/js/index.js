@@ -1,3 +1,5 @@
+// NOTE OOP, 논리연산자, 중복체크, 전체 render는 필요할때만
+
 // NEW STEP1
 // 에스프레소 메뉴 추가
 //    메뉴이름 입력 -> (빈값 체크 || FIXME 중복체크) -> 확인버튼
@@ -37,80 +39,123 @@ const btnAddMenu = document.querySelector('#espresso-menu-submit-button');
 const espressoContainer = document.querySelector('#espresso-menu-list');
 const espressoForm = document.querySelector('#espresso-menu-form');
 const menuCount = document.querySelector('.menu-count');
-const resetInput = () => (addMenuInput.value = '');
-const countMenu = () => {
-  const count = espressoContainer.querySelectorAll('li').length;
 
-  menuCount.textContent = `총 ${count}개`;
-};
+class App {
+  menus = [];
 
-const menus = []; // FIXME 나중에 mode에따라 localStorgae에서 가져오는걸로 업데이트 || []
-const renderTemplete = (templetes) => {};
+  constructor() {
+    this._getLocalStorage();
+    btnAddMenu.addEventListener('click', this._addMenu.bind(this));
 
-const addMenu = () => {
-  const espressoMenu = addMenuInput.value;
-  if (!espressoMenu.trim(' ')) {
-    resetInput();
-    return;
+    // arrowFunction Lexical this
+    addMenuInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this._addMenu();
+      }
+    });
+
+    espressoContainer.addEventListener('click', (e) => {
+      e.target.classList.contains('menu-edit-button') && this._editMenu(e);
+      e.target.classList.contains('menu-remove-button') && this._removeMenu(e);
+    });
   }
-  menus.push({ name: espressoMenu });
-  const templetes = menus
-    .map((menu) => {
-      return `
-        <li class="menu-list-item d-flex items-center py-2">
-          <span class="w-100 pl-2 menu-name">${menu.name}</span>
-          <button
-          type="button"
-          class="bg-gray-50 text-gray-500 text-sm mr-1 menu-edit-button"
-          >
-          수정
-          </button>
-          <button
-          type="button"
-          class="bg-gray-50 text-gray-500 text-sm menu-remove-button"
-          >
-          삭제
-          </button>
+
+  _countMenu() {
+    const count = this.menus.length;
+    menuCount.textContent = `총 ${count}개`;
+  }
+
+  _renderTempletes(menu) {
+    const templete = `
+        <li class="menu-list-item d-flex items-center py-2" data-menu-id="${menu.name}">
+        <span class="w-100 pl-2 menu-name">${menu.name}</span>
+        <button
+        type="button"
+        class="bg-gray-50 text-gray-500 text-sm mr-1 menu-edit-button"
+        >
+        수정
+        </button>
+        <button
+        type="button"
+        class="bg-gray-50 text-gray-500 text-sm menu-remove-button"
+        >
+        삭제
+        </button>
         </li>
-  `;
-    })
-    .join('');
-  // espressoContainer.insertAdjacentHTML('beforeend', templetes);
-  espressoContainer.innerHTML = templetes;
-  resetInput();
-  countMenu();
-  console.log(menus);
-};
+      `;
 
-btnAddMenu.addEventListener('click', addMenu);
-
-addMenuInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    addMenu();
+    espressoContainer.insertAdjacentHTML('beforeend', templete);
   }
-});
 
-const editMenu = (menuName) => {
-  const editedMenu = prompt(
-    '바꿀 메뉴 이름을 입력해주세요',
-    `${menuName.textContent}`
-  );
-  menuName.textContent = editedMenu;
-};
-const delMenu = (menutag, menuName) => {
-  confirm(`정말 ${menuName.textConten}를 삭제하시겠습니까?`) &&
-    espressoContainer.removeChild(menutag);
-  countMenu();
-};
+  _checkValid(newMenu) {
+    return this.menus.every((menu) => menu.name !== newMenu);
+  }
 
-espressoContainer.addEventListener('click', (e) => {
-  const targetClass = e.target.classList;
-  targetClass.contains('menu-edit-button') &&
-    editMenu(e.target.closest('li').querySelector('.menu-name'));
-  targetClass.contains('menu-remove-button') &&
-    delMenu(
-      e.target.closest('li'),
-      e.target.closest('li').querySelector('.menu-name')
+  _addMenu() {
+    let newMenu = addMenuInput.value;
+    if (!this._checkValid(newMenu)) {
+      alert('이미 있는 메뉴입니다');
+      this._resetInput();
+      return;
+    }
+    if (!newMenu.trim(' ')) {
+      this._resetInput();
+      return;
+    }
+    newMenu = { name: newMenu };
+    this.menus.push(newMenu); // FIXME나중에 로컬스토리지에도 저장
+    this._renderTempletes(newMenu);
+    this._resetInput();
+    this._countMenu();
+    this._setLocalStorage();
+  }
+
+  _editMenu(e) {
+    // const menuId = e.target.closest('li').dataset.menuId;
+    const menuName = e.target
+      .closest('li')
+      .querySelector('.menu-name').textContent;
+    const nameUpdated = prompt('바꿀 메뉴 이름을 입력해주세요', `${menuName}`);
+    if (!nameUpdated) return;
+
+    const menuToUpdate = this.menus.find((menu, i, arr) => {
+      if (menu.name === menuName) return menu;
+    });
+    menuToUpdate.name = nameUpdated;
+    this._setLocalStorage();
+    this._getLocalStorage();
+  }
+
+  _removeMenu(e) {
+    const menuName = e.target
+      .closest('li')
+      .querySelector('.menu-name').textContent;
+
+    if (!confirm(`정말 ${menuName}를 삭제하시겠습니까?`)) return;
+    this.menus.find(
+      (menu, i, arr) => menu.name === menuName && arr.splice(i, 1)
     );
-});
+
+    this._countMenu();
+    this._setLocalStorage();
+    this._getLocalStorage();
+  }
+
+  _resetInput = () => (addMenuInput.value = '');
+
+  _setLocalStorage() {
+    localStorage.setItem('espressoMenu', JSON.stringify(this.menus));
+    // this._renderTempletes();
+  }
+  _getLocalStorage() {
+    // NOTE 여기서 모드를 체크해서 로컬스트리지에서 받아올 아이템이름을 곧 모드르
+    // NOTE e.g. mode='espressoMenu'이런식으로해서 getItem`${mode}`
+    const data = JSON.parse(localStorage.getItem('espressoMenu'));
+    this.menus = !data ? [] : data;
+    espressoContainer.innerHTML = '';
+    this.menus.forEach((menu) => this._renderTempletes(menu));
+  }
+}
+
+const menuapp = new App();
