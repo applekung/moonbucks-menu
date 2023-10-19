@@ -39,12 +39,19 @@ const btnAddMenu = document.querySelector('#espresso-menu-submit-button');
 const espressoContainer = document.querySelector('#espresso-menu-list');
 const espressoForm = document.querySelector('#espresso-menu-form');
 const menuCount = document.querySelector('.menu-count');
+const nav = document.querySelector('nav');
+const header = document.querySelector('.menu-header');
 
 class App {
   menus = [];
+  category = 'espresso';
 
   constructor() {
+    // this._getCategory();
     this._getLocalStorage();
+
+    nav.addEventListener('click', this._getCategory.bind(this));
+
     btnAddMenu.addEventListener('click', this._addMenu.bind(this));
 
     // arrowFunction Lexical this
@@ -145,16 +152,23 @@ class App {
   _resetInput = () => (addMenuInput.value = '');
 
   _setLocalStorage() {
-    localStorage.setItem('espressoMenu', JSON.stringify(this.menus));
+    localStorage.setItem(`${this.category}`, JSON.stringify(this.menus));
     // this._renderTempletes();
   }
   _getLocalStorage() {
     // NOTE 여기서 모드를 체크해서 로컬스트리지에서 받아올 아이템이름을 곧 모드르
     // NOTE e.g. mode='espressoMenu'이런식으로해서 getItem`${mode}`
-    const data = JSON.parse(localStorage.getItem('espressoMenu'));
+    const data = JSON.parse(localStorage.getItem(this.category));
     this.menus = !data ? [] : data;
     espressoContainer.innerHTML = '';
     this.menus.forEach((menu) => this._renderTempletes(menu));
+  }
+
+  _getCategory(e) {
+    if (!e.target.dataset.categoryName) return;
+    this.category = e.target.dataset.categoryName;
+    this._getLocalStorage();
+    header.textContent = `${e.target.textContent} 메뉴 관리`;
   }
 }
 
