@@ -1,4 +1,5 @@
 // NOTE OOP, 논리연산자, 중복체크, 전체 render는 필요할때만
+// FIXME 음료 추가/수정 시 인풋 validation검사 정규표현식
 
 // NEW STEP1
 // 에스프레소 메뉴 추가
@@ -20,8 +21,6 @@
 //  메뉴추가, 수정, 삭제시 업데이트
 
 // 음료 종류별로 관리(프라푸치노, 에스프레소, 디저트, ...)
-//   옵션1) 탭식으로 관리(hidden클래스 추가)
-//   옵션2) FIXME 음료 탭별로 id저장해놨다가 각각의 localStorage불러오기
 
 // 처음 접속시 에스프레소페이지
 // mode -> localStorage읽기 -> rendering
@@ -30,6 +29,7 @@
 // 품절상태관리
 
 // NEW STEP3 WEB-SERVER
+
 // NEW STEP4 OOP로 전환
 // {{espresso:[{},{},{}]},...,{desert:[{},{}]}}
 // render, mode
@@ -43,9 +43,14 @@ const nav = document.querySelector('nav');
 const header = document.querySelector('.menu-header');
 
 class App {
-  menus = [];
+  menus = {
+    espresso: [],
+    frappuccino: [],
+    blened: [],
+    teavana: [],
+    desert: [],
+  };
   category = 'espresso';
-
   constructor() {
     // this._getCategory();
     this._getLocalStorage();
@@ -110,8 +115,13 @@ class App {
       this._resetInput();
       return;
     }
+
     newMenu = { name: newMenu };
-    this.menus.push(newMenu); // FIXME나중에 로컬스토리지에도 저장
+    console.log(this.menus);
+    console.log(this.menus.espresso);
+    console.log(this.menus[this.category]);
+    console.log();
+    this.menus[this.category].push(newMenu); // FIXME나중에 로컬스토리지에도 저장
     this._renderTempletes(newMenu);
     this._resetInput();
     this._countMenu();
@@ -152,13 +162,16 @@ class App {
   _resetInput = () => (addMenuInput.value = '');
 
   _setLocalStorage() {
-    localStorage.setItem(`${this.category}`, JSON.stringify(this.menus));
+    localStorage.setItem(
+      `${this.menus[this.category]}`,
+      JSON.stringify(this.menus[this.category])
+    );
     // this._renderTempletes();
   }
   _getLocalStorage() {
     // NOTE 여기서 모드를 체크해서 로컬스트리지에서 받아올 아이템이름을 곧 모드르
     // NOTE e.g. mode='espressoMenu'이런식으로해서 getItem`${mode}`
-    const data = JSON.parse(localStorage.getItem(this.category));
+    const data = JSON.parse(localStorage.getItem(this.menus[this.category]));
     this.menus = !data ? [] : data;
     espressoContainer.innerHTML = '';
     this.menus.forEach((menu) => this._renderTempletes(menu));
